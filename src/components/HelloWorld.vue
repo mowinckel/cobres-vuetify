@@ -41,8 +41,9 @@
       </strong>
 
       <v-spacer></v-spacer>
-
-      <v-progress-circular :value="progress" class="mr-2"></v-progress-circular>
+      <v-btn class="mx-4" fab dark color="pink" @click="scan()">
+        <v-icon dark>mdi-heart</v-icon>
+      </v-btn>
     </v-row>
 
     <v-divider class="mb-4"></v-divider>
@@ -119,6 +120,12 @@ export default {
       });
   },
   methods: {
+    scan() {
+      this.axios.get("/v1/api/miners").then(response => {
+        // eslint-disable-next-line no-console
+        console.log(response);
+      });
+    },
     change() {
       db.collection("miners")
         .doc("favorite")

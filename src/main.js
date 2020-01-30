@@ -7,7 +7,11 @@ import Vuelidate from "vuelidate";
 
 import { firestorePlugin } from "vuefire";
 
+import axios from "axios";
+import VueAxios from "vue-axios";
+
 Vue.use(Vuelidate);
+Vue.use(VueAxios, axios)
 Vue.use(firestorePlugin);
 Vue.config.productionTip = false;
 
