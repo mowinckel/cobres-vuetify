@@ -31,18 +31,24 @@
 
     <v-row class="my-1" align="center">
       <strong class="mx-4 info--text text--darken-3">
-        Monitoring : {{ remainingTasks }}
+        Monitoring : {{ miners.length }}
       </strong>
 
       <v-divider vertical></v-divider>
 
-      <strong class="mx-4 black--text">
-        Completed: {{ completedTasks }}
-      </strong>
+      <strong class="mx-4 black--text"> Down: {{ completedTasks }} </strong>
 
       <v-spacer></v-spacer>
-      <v-btn class="mx-4" fab dark color="pink" @click="scan()">
-        <v-icon dark>mdi-heart</v-icon>
+      <v-btn
+        class="mx-4 elevation-2"
+        fab
+        small
+        color="green"
+        @click="scan()"
+        :loading="loading"
+        :disabled="loading"
+      >
+        <v-icon color="white">mdi-refresh</v-icon>
       </v-btn>
     </v-row>
 
@@ -67,28 +73,75 @@
           </v-list-item-icon>
 
           <v-list-item-content>
-            <v-list-item-title class="title">{{ task }}</v-list-item-title>
-            <v-list-item-title>{{ task }}</v-list-item-title>
+            <!-- <div
+                class="text-no-wrap"
+                v-for="field in Object.keys(task.summary)"
+                :key="field"
+              >
+                <b>{{ field }}</b> {{ task.summary[field] }}
+              </div> -->
+            <v-list-item-title class="title">{{ task.ip }}</v-list-item-title>
+            <v-list-item-title>{{ task.mac }}</v-list-item-title>
+            <v-list-item-title>{{
+              task.summary.lastacctime
+            }}</v-list-item-title>
           </v-list-item-content>
-
           <v-list-item-action>
             <v-list-item-action-text></v-list-item-action-text>
             <v-menu offset-y>
               <template v-slot:activator="{ on }">
-                <v-btn icon text color="success" dark v-on="on">
-                  <v-icon>mdi-menu</v-icon>
+                <v-btn
+                  icon
+                  text
+                  color="success"
+                  dark
+                  v-on="on"
+                  @click="setting(task.summary)"
+                >
+                  <v-icon>mdi-settings</v-icon>
                 </v-btn>
               </template>
-              <v-list>
-                <v-list-item v-for="(item, index) in menu" :key="index">
-                  <v-list-item-title>{{ item.title }}</v-list-item-title>
-                </v-list-item>
-              </v-list>
             </v-menu>
           </v-list-item-action>
         </v-list-item>
+
         <!-- </transition-group> -->
       </draggable>
+
+      <v-dialog v-model="dialog" max-width="500" scrollable>
+        <v-card>
+          <v-alert prominent type="error" title tile>
+            <v-row align="center">
+              <v-col class="grow">Caution!! This is advanced setting</v-col>
+            </v-row>
+          </v-alert>
+
+          <v-card-text style="height: 300px">
+            <v-col cols="12">
+              <v-text-field
+                v-for="[key, value] in Object.entries(dialogContent)"
+                :label="key"
+                :placeholder="value"
+                outlined
+                :key="key"
+              ></v-text-field>
+            </v-col>
+          </v-card-text>
+
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+
+            <v-btn color="green darken-1" text large @click="dialog = false">
+              Cancel
+            </v-btn>
+
+            <v-btn color="green darken-1" text large @click="dialog = false">
+              Apply
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card>
   </v-container>
 </template>
@@ -108,42 +161,38 @@ export default {
     draggable
   },
   firestore: {
-    miners: db.collection("miners").doc("favorite")
-  },
-  created() {
-    db.collection("miners")
-      .doc("favorite")
-      .get()
-      .then(doc => {
-        // eslint-disable-next-line no-console
-        console.log(doc.data());
-      });
+    miners: db.collection("miners").orderBy("priority")
   },
   methods: {
+    setting(content) {
+      this.dialogContent = content;
+      this.dialog = true;
+    },
     scan() {
-      this.axios.get("/v1/api/miners").then(response => {
-        // eslint-disable-next-line no-console
-        console.log(response);
-      });
+      this.loader = "loading";
+      // eslint-disable-next-line no-unused-vars
+      this.axios.get("/v1/api/miners").then(response => {});
     },
     change() {
-      db.collection("miners")
-        .doc("favorite")
-        .set(this.miners);
+      this.miners.forEach((element, index) => {
+        // eslint-disable-next-line no-console
+        db.collection("miners")
+          .doc(element.ip)
+          .update({ priority: index });
+      });
     },
     create() {
       this.$v.$touch();
 
       if (!this.$v.$invalid) {
-        db.collection("miners").add({
-          name: this.$v.ip.$model
-        });
-
+        this.axios.post(`/v1/api/miners/${this.$v.ip.$model}`);
         this.$v.ip.$model = null;
       }
     }
   },
   data: () => ({
+    dialogContent: [],
+    dialog: false,
     ip: "",
     rules: [
       value => {
@@ -153,8 +202,18 @@ export default {
     ],
     selected: [],
     miners: [],
-    menu: [{ title: "restart" }, { title: "reboot" }, { title: "stop" }]
+    loading: false,
+    loader: null
   }),
+  watch: {
+    loader() {
+      const l = this.loader;
+      this[l] = !this[l];
+      setTimeout(() => (this[l] = false), 3000);
+
+      this.loader = null;
+    }
+  },
   computed: {
     dragOptions() {
       return {
@@ -165,7 +224,7 @@ export default {
       };
     },
     completedTasks() {
-      return 3;
+      return 0;
       // return this.miners.filter(task => task.done).length;
     },
     progress() {
@@ -197,5 +256,9 @@ export default {
 }
 .list-group-item i {
   cursor: pointer;
+}
+.custom-loader {
+  animation: loader 1s infinite;
+  display: flex;
 }
 </style>
