@@ -40,7 +40,7 @@
 
       <v-spacer></v-spacer>
       <v-btn
-        class="mx-4 elevation-2"
+        class="mx-4 elevation-1"
         fab
         small
         color="green"
@@ -55,58 +55,76 @@
     <v-divider class="mb-4"></v-divider>
 
     <v-card v-if="miners.length > 0">
-      <!-- <v-list-item-group
+      <v-list-item-group
         v-model="selected"
         multiple
         active-class="green--text"
         dense
-      > -->
-      <draggable v-model="miners" v-bind="dragOptions" @change="change">
-        <!-- <transition-group type="transition" name="flip"> -->
-        <v-list-item
-          three-line
-          v-for="(task, i) in miners"
-          :key="`${i}-${task}`"
-        >
-          <v-list-item-icon>
-            <v-icon color="green">mdi-check-circle</v-icon>
-          </v-list-item-icon>
+      >
+        <draggable v-model="miners" v-bind="dragOptions" @change="change">
+          <!-- <v-slide-y-transition class="py-0" group> -->
+          <transition-group type="transition" name="flip">
+            <v-list-item
+              three-line
+              v-for="(task, i) in miners"
+              :key="`${i}-${task}`"
+            >
+              <v-list-item-icon>
+                <v-icon color="green">mdi-check-circle</v-icon>
+              </v-list-item-icon>
 
-          <v-list-item-content>
-            <!-- <div
+              <v-list-item-content>
+                <!-- <div
                 class="text-no-wrap"
                 v-for="field in Object.keys(task.summary)"
                 :key="field"
               >
                 <b>{{ field }}</b> {{ task.summary[field] }}
               </div> -->
-            <v-list-item-title class="title">{{ task.ip }}</v-list-item-title>
-            <v-list-item-title>{{ task.mac }}</v-list-item-title>
-            <v-list-item-title>{{
-              task.summary.lastacctime
-            }}</v-list-item-title>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-list-item-action-text></v-list-item-action-text>
-            <v-menu offset-y>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  icon
-                  text
-                  color="success"
-                  dark
-                  v-on="on"
-                  @click="setting(task.summary)"
+                <v-list-item-title class="title"
+                  >{{ task.ip }} :: {{ task.summary.algo }}</v-list-item-title
                 >
-                  <v-icon>mdi-settings</v-icon>
-                </v-btn>
-              </template>
-            </v-menu>
-          </v-list-item-action>
-        </v-list-item>
-
-        <!-- </transition-group> -->
-      </draggable>
+                <v-list-item-title>{{ task.summary.url }}</v-list-item-title>
+                <v-list-item-title>{{ task.summary.user }}</v-list-item-title>
+                <!-- <v-list-item-title>{{ task.summary.pass }}</v-list-item-title>
+              <v-list-item-title>{{ task.summary.hs }}</v-list-item-title>
+              <v-list-item-title>{{ task.summary.acc }}</v-list-item-title>
+              <v-list-item-title
+                ><b>reject : </b>{{ task.summary.rej }}</v-list-item-title
+              >
+              <v-list-item-title
+                ><b>acc/min : </b>{{ task.summary.accmn }}</v-list-item-title
+              >
+              <v-list-item-title
+                ><b>last accept time: </b
+                >{{ task.summary.lastacctime }}</v-list-item-title
+              >
+              <v-list-item-title
+                ><b>temp: </b>{{ task.summary.temp }}</v-list-item-title
+              > -->
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-list-item-action-text></v-list-item-action-text>
+                <v-menu offset-y>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      icon
+                      text
+                      color="success"
+                      dark
+                      v-on="on"
+                      @click="setting(task.summary)"
+                    >
+                      <v-icon>mdi-settings</v-icon>
+                    </v-btn>
+                  </template>
+                </v-menu>
+              </v-list-item-action>
+            </v-list-item>
+          </transition-group>
+          <!-- </v-slide-y-transition> -->
+        </draggable>
+      </v-list-item-group>
 
       <v-dialog v-model="dialog" max-width="500" scrollable>
         <v-card>
@@ -150,7 +168,6 @@
 import { validationMixin } from "vuelidate";
 import { minLength, required } from "vuelidate/lib/validators";
 import draggable from "vuedraggable";
-import { db } from "../firebase";
 
 export default {
   mixins: [validationMixin],
@@ -160,30 +177,23 @@ export default {
   components: {
     draggable
   },
-  firestore: {
-    miners: db.collection("miners").orderBy("priority")
+  beforeMount() {
+    this.loader = "loading";
+    // eslint-disable-next-line no-unused-vars
+    this.axios.get("/v1/api/miners").then(response => {
+      this.miners = response.data;
+    });
   },
   methods: {
     setting(content) {
       this.dialogContent = content;
       this.dialog = true;
     },
-    scan() {
-      this.loader = "loading";
-      // eslint-disable-next-line no-unused-vars
-      this.axios.get("/v1/api/miners").then(response => {});
-    },
     change() {
-      this.miners.forEach((element, index) => {
-        // eslint-disable-next-line no-console
-        db.collection("miners")
-          .doc(element.ip)
-          .update({ priority: index });
-      });
+      // this.miners.forEach((element, index) => {});
     },
     create() {
       this.$v.$touch();
-
       if (!this.$v.$invalid) {
         this.axios.post(`/v1/api/miners/${this.$v.ip.$model}`);
         this.$v.ip.$model = null;
