@@ -1,5 +1,27 @@
 <template>
   <v-container>
+    <v-fab-transition>
+      <v-speed-dial
+        v-model="fab"
+        fixed
+        fab
+        large
+        dark
+        bottom
+        right
+        v-show="!hidden"
+      >
+        <template v-slot:activator>
+          <v-btn v-model="fab" color="green" dark fab>
+            <v-icon v-if="fab">mdi-close</v-icon>
+            <v-icon v-else>mdi-account-circle</v-icon>
+          </v-btn>
+        </template>
+        <v-btn fab dark small color="green" @click="dialog = true">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+      </v-speed-dial>
+    </v-fab-transition>
     <form @submit.prevent="create">
       <v-text-field
         v-model="$v.ip.$model"
@@ -10,11 +32,6 @@
         required
         @blur="$v.ip.$touch()"
       >
-        <!-- <v-fade-transition v-slot:append>
-          <v-icon v-if="task" @click="create">
-            add_circle
-          </v-icon>
-        </v-fade-transition> -->
       </v-text-field>
     </form>
 
@@ -39,92 +56,86 @@
       <strong class="mx-4 black--text"> Down: {{ completedTasks }} </strong>
 
       <v-spacer></v-spacer>
-      <v-btn
-        class="mx-4 elevation-1"
-        fab
-        small
-        color="green"
-        @click="scan()"
-        :loading="loading"
-        :disabled="loading"
-      >
-        <v-icon color="white">mdi-refresh</v-icon>
-      </v-btn>
     </v-row>
 
     <v-divider class="mb-4"></v-divider>
 
     <v-card v-if="miners.length > 0">
-      <v-list-item-group
+      <!-- <v-list-item-group
         v-model="selected"
         multiple
         active-class="green--text"
         dense
-      >
-        <draggable v-model="miners" v-bind="dragOptions" @change="change">
-          <!-- <v-slide-y-transition class="py-0" group> -->
-          <transition-group type="transition" name="flip">
-            <v-list-item
-              three-line
-              v-for="(task, i) in miners"
-              :key="`${i}-${task}`"
-            >
-              <v-list-item-icon>
-                <v-icon color="green">mdi-check-circle</v-icon>
-              </v-list-item-icon>
+      > -->
+      <draggable v-model="miners" v-bind="dragOptions" @change="change">
+        <!-- <v-slide-y-transition class="py-0" group> -->
+        <transition-group type="transition" name="flip">
+          <v-list-item
+            three-line
+            v-for="(task, i) in miners"
+            :key="`${i}-${task}`"
+          >
+            <template v-slot:default="{ active }">
+              <v-list-item-action>
+                <v-checkbox v-model="active" color="green"></v-checkbox>
+              </v-list-item-action>
 
               <v-list-item-content>
-                <!-- <div
-                class="text-no-wrap"
-                v-for="field in Object.keys(task.summary)"
-                :key="field"
-              >
-                <b>{{ field }}</b> {{ task.summary[field] }}
-              </div> -->
-                <v-list-item-title class="title"
-                  >{{ task.ip }} :: {{ task.summary.algo }}</v-list-item-title
+                <v-btn
+                  class="headline"
+                  :href="`http://${task.ip}`"
+                  depressed
+                  outlined
+                  rounded
+                  color="green"
+                  >{{ task.ip }}</v-btn
                 >
-                <v-list-item-title>{{ task.summary.url }}</v-list-item-title>
-                <v-list-item-title>{{ task.summary.user }}</v-list-item-title>
-                <!-- <v-list-item-title>{{ task.summary.pass }}</v-list-item-title>
-              <v-list-item-title>{{ task.summary.hs }}</v-list-item-title>
-              <v-list-item-title>{{ task.summary.acc }}</v-list-item-title>
-              <v-list-item-title
-                ><b>reject : </b>{{ task.summary.rej }}</v-list-item-title
-              >
-              <v-list-item-title
-                ><b>acc/min : </b>{{ task.summary.accmn }}</v-list-item-title
-              >
-              <v-list-item-title
-                ><b>last accept time: </b
-                >{{ task.summary.lastacctime }}</v-list-item-title
-              >
-              <v-list-item-title
-                ><b>temp: </b>{{ task.summary.temp }}</v-list-item-title
-              > -->
+                <v-text-field
+                  v-model="task.summary.url"
+                  hide-details
+                  dense
+                  rounded
+                  filled
+                ></v-text-field>
+                <v-text-field
+                  v-model="task.summary.user"
+                  hide-details
+                  dense
+                  rounded
+                  filled
+                ></v-text-field>
               </v-list-item-content>
+
               <v-list-item-action>
-                <v-list-item-action-text></v-list-item-action-text>
-                <v-menu offset-y>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      icon
-                      text
-                      color="success"
-                      dark
-                      v-on="on"
-                      @click="setting(task.summary)"
-                    >
-                      <v-icon>mdi-settings</v-icon>
-                    </v-btn>
-                  </template>
-                </v-menu>
+                <v-list-item-action-text class="body-2"
+                  >temp : {{ task.summary.temp }}C</v-list-item-action-text
+                >
+                <v-list-item-action-text class="body-2"
+                  >uptime :
+                  {{ uptime(task.summary.uptime) }}</v-list-item-action-text
+                >
+                <v-list-item-action-text class="body-2"
+                  >last accept :
+                  {{
+                    timeago(task.summary.lastacctime)
+                  }}</v-list-item-action-text
+                >
+                <v-list-item-action-text class="body-2"
+                  >reject :{{ task.summary.rej }}</v-list-item-action-text
+                >
+                <v-list-item-action-text class="body-2"
+                  >algorithm :{{ task.summary.algo }}</v-list-item-action-text
+                >
+                <v-list-item-action-text class="body-2"
+                  >{{ task.summary.khs }}kH/s</v-list-item-action-text
+                >
               </v-list-item-action>
-            </v-list-item>
-          </transition-group>
-          <!-- </v-slide-y-transition> -->
-        </draggable>
-      </v-list-item-group>
+            </template>
+          </v-list-item>
+        </transition-group>
+        <!-- </v-slide-y-transition> -->
+      </draggable>
+      <!-- </v-list-item-group> -->
 
       <v-dialog v-model="dialog" max-width="500" scrollable>
         <v-card>
@@ -168,6 +179,9 @@
 import { validationMixin } from "vuelidate";
 import { minLength, required } from "vuelidate/lib/validators";
 import draggable from "vuedraggable";
+import TimeAgo from "javascript-time-ago";
+import ko from "javascript-time-ago/locale/ko";
+TimeAgo.addLocale(ko);
 
 export default {
   mixins: [validationMixin],
@@ -178,19 +192,42 @@ export default {
     draggable
   },
   beforeMount() {
-    this.loader = "loading";
     // eslint-disable-next-line no-unused-vars
     this.axios.get("/v1/api/miners").then(response => {
       this.miners = response.data;
     });
   },
   methods: {
+    apply(ip, setting) {
+      this.axios
+        .put(`/v1/api/miners/status/${ip}`, { setting: setting })
+        .then(response => {
+          // eslint-disable-next-line no-console
+          console.log(response);
+        });
+    },
     setting(content) {
       this.dialogContent = content;
       this.dialog = true;
     },
     change() {
-      // this.miners.forEach((element, index) => {});
+      // this.axios.post("/v1/api/miner");
+      // this.miners.forEach((element, index) => {
+      // });
+    },
+    uptime(seconds) {
+      return `${parseInt(seconds / 3600)} 시간`;
+    },
+    timeago(time) {
+      const timeAgo = new TimeAgo("ko-KR");
+      const result = timeAgo.format(new Date(time));
+
+      if (result === "지금") {
+        // eslint-disable-next-line no-console
+        return `${Math.floor((new Date() - new Date(time)) / 1000)}초 전`;
+      } else {
+        return result;
+      }
     },
     create() {
       this.$v.$touch();
@@ -201,6 +238,9 @@ export default {
     }
   },
   data: () => ({
+    test: false,
+    fab: false,
+    hidden: false,
     dialogContent: [],
     dialog: false,
     ip: "",
