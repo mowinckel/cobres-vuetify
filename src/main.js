@@ -5,14 +5,11 @@ import "roboto-fontface/css/roboto/roboto-fontface.css";
 import "@mdi/font/css/materialdesignicons.css";
 import Vuelidate from "vuelidate";
 
-import { firestorePlugin } from "vuefire";
-
 import axios from "axios";
 import VueAxios from "vue-axios";
 
 Vue.use(Vuelidate);
-Vue.use(VueAxios, axios)
-Vue.use(firestorePlugin);
+Vue.use(VueAxios, axios);
 Vue.config.productionTip = false;
 
 new Vue({
