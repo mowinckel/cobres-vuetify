@@ -9,7 +9,9 @@
       item-key="ip"
     >
       <template v-slot:item.url="props">
-        <v-chip label class="pa-1">{{ props.item.summary.url }}</v-chip>
+        <v-chip @click="setting(props.item)" class="pa-1">{{
+          props.item.summary.url
+        }}</v-chip>
       </template>
       <template v-slot:item.summary.acc="props">
         <v-chip outlined small color="green" class="pa-1">
@@ -37,28 +39,36 @@
             >Super Monitor</v-toolbar-title
           >
 
-          <v-dialog v-model="dialog" width="800">
-            <template v-slot:activator="{ on }">
-              <v-btn color="green" dark v-on="on" outlined rounded>
-                Setting
-              </v-btn>
-            </template>
-
+          <v-dialog v-model="dialog" width="800" persistent>
             <v-card>
               <v-card-title>
-                <span class="headline">{{ formTitle }}</span>
+                <span class="headline">{{ minerInfo.ip }}</span>
               </v-card-title>
 
               <v-card-text>
-                <v-textarea hide-details outlined></v-textarea>
+                <v-textarea
+                  height="300"
+                  hide-details
+                  outlined
+                  full-width
+                  v-model="minerJSON"
+                ></v-textarea>
               </v-card-text>
 
-              <v-divider></v-divider>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="green" text @click="save(selected[0].ip)"
+                <v-btn color="grey" outlined @click="dialog = false"
+                  >Cancel</v-btn
+                >
+                <v-btn
+                  color="green"
+                  outlined
+                  @click="save(minerInfo.ip)"
+                  :loading="loading"
+                  :disabled="loading"
                   >Save</v-btn
                 >
+
                 <v-spacer></v-spacer>
               </v-card-actions>
             </v-card>
@@ -109,30 +119,30 @@ export default {
     });
   },
   methods: {
-    save(ip) {
-      // eslint-disable-next-line no-console
-      console.log(ip);
-      this.axios.put(`/v1/api/miners/status/${ip}`).then(() => {
-        this.snack = true;
+    async save(ip) {
+      this.loader = "loading";
+      try {
+        await this.axios.put(
+          `/v1/api/miners/status/${ip}`,
+          JSON.parse(this.minerJSON)
+        );
         this.snackColor = "success";
         this.snackText = "Data saved";
-      });
+      } catch (error) {
+        this.snackColor = "error";
+        this.snackText = error;
+        this.snack = true;
+      } finally {
+        this.snack = true;
+      }
     },
-    editItem(item) {
-      this.editedIndex = this.desserts.indexOf(item);
-      this.editedItem = Object.assign({}, item);
-      this.dialog = true;
-    },
-    apply(ip, setting) {
-      this.axios.put(`/v1/api/miners/status/${ip}`, setting).then(response => {
-        // eslint-disable-next-line no-console
-        console.log(response.data);
-      });
-    },
+    // eslint-disable-next-line no-unused-vars
     setting(content) {
-      this.dialogContent = content;
+      this.minerInfo = content;
+      this.minerJSON = JSON.stringify(this.minerInfo.setting, null, 2);
       this.dialog = true;
     },
+
     timeago(time) {
       const timeAgo = new TimeAgo("ko-KR");
       const result = timeAgo.format(new Date(time));
@@ -153,13 +163,8 @@ export default {
     }
   },
   data: () => ({
-    editedItem: {
-      name: "",
-      calories: 0,
-      fat: 0,
-      carbs: 0,
-      protein: 0
-    },
+    minerJSON: "",
+    minerInfo: "",
     dialog: false,
     snack: false,
     snackColor: "",
@@ -201,17 +206,15 @@ export default {
     loading: false,
     loader: null
   }),
-  computed: {
-    formTitle() {
-      return this.editedIndex === -1 ? "New Item" : "Edit Item";
-    }
-  },
 
   watch: {
     loader() {
       const l = this.loader;
       this[l] = !this[l];
-      setTimeout(() => (this[l] = false), 3000);
+      setTimeout(() => {
+        this[l] = false;
+        this.dialog = false;
+      }, 3000);
 
       this.loader = null;
     }
