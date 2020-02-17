@@ -69,6 +69,28 @@
                   >Save</v-btn
                 >
 
+                <v-btn
+                  color="pink accent-2"
+                  outlined
+                  @click="save(minerInfo.ip)"
+                  :loading="loading"
+                  :disabled="loading"
+                >
+                  Restart</v-btn
+                >
+
+                <v-spacer></v-spacer>
+
+                <v-btn
+                  color="red accent-4"
+                  depressed
+                  @click="save(minerInfo.ip)"
+                  :loading="loading"
+                  :disabled="loading"
+                >
+                  Reboot</v-btn
+                >
+
                 <v-spacer></v-spacer>
               </v-card-actions>
             </v-card>
@@ -106,7 +128,7 @@ export default {
     ip: { required, minLength: minLength(8) }
   },
   beforeMount() {
-    // this.$vuetify.theme.dark = fal; // eslint-disable-next-line no-unused-vars
+    // this.$vuetify.theme.dark = false; // eslint-disable-next-line no-unused-vars
     this.axios.get("/v1/api/miners").then(response => {
       this.miners = response.data;
       this.miners.forEach(element => {
@@ -175,16 +197,18 @@ export default {
       { text: "url", value: "url" },
       { text: "user", value: "summary.user" },
       { text: "pass", value: "summary.pass", sortable: false },
-      { text: "acc", value: "summary.acc" },
+      { text: "accept", value: "summary.acc" },
       { text: "acc/min", value: "summary.accmn" },
       { text: "reject", value: "summary.rej" },
       { text: "temp", value: "summary.temp" },
       { text: "lastacc", value: "summary.lastacctime" },
       { text: "uptime", value: "summary.uptime" },
       { text: "hashrate", value: "summary.khs" },
-      { text: "algorithm", value: "summary.algo" },
+      { text: "algo", value: "summary.algo" },
       { text: "netdiff", value: "summary.diff" },
       { text: "pooldiff", value: "summary.stdiff" },
+      { text: "chip", value: "summary.ascs" },
+      { text: "valid", value: "summary.ascsvalid" },
       { text: "freq", value: "summary.freq" }
     ],
     ip: "",
