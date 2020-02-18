@@ -29,7 +29,10 @@
         >
       </template>
       <template v-slot:item.summary.temp="props">
-        <v-chip small class="pa-1" outlined>
+        <v-chip small color="orange" class="pa-1" outlined>
+          <v-icon v-if="props.item.summary.temp > 70" color="orange"
+            >mdi-fire</v-icon
+          >
           {{ props.item.summary.temp }} C
         </v-chip>
       </template>
@@ -44,54 +47,108 @@
               <v-card-title>
                 <span class="headline">{{ minerInfo.ip }}</span>
               </v-card-title>
-
-              <v-card-text>
-                <v-textarea
-                  height="300"
-                  hide-details
+              <v-col cols="12">
+                <v-text-field
+                  label="URL"
+                  color="green"
                   outlined
-                  full-width
-                  v-model="minerJSON"
-                ></v-textarea>
-              </v-card-text>
+                  :disabled="loading"
+                  dense
+                  rounded
+                  v-model="minerInfo.summary.url"
+                ></v-text-field>
+                <v-text-field
+                  label="User"
+                  rounded
+                  color="green"
+                  :disabled="loading"
+                  outlined
+                  dense
+                  v-model="minerInfo.summary.user"
+                ></v-text-field>
+                <v-text-field
+                  label="Pass"
+                  color="green"
+                  rounded
+                  outlined
+                  dense
+                  :disabled="loading"
+                  v-model="minerInfo.summary.pass"
+                ></v-text-field>
+              </v-col>
 
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="grey" outlined @click="dialog = false"
-                  >Cancel</v-btn
+              <v-expand-transition>
+                <v-col cols="12" v-show="advanced">
+                  <v-textarea
+                    dark
+                    background-color="red"
+                    solo
+                    name="input-7-4"
+                    label="Solo textarea"
+                    v-model="minerJSON"
+                  ></v-textarea>
+                </v-col>
+              </v-expand-transition>
+
+              <v-card-actions class="px-4">
+                <v-btn color="grey" dark rounded depressed @click="dialog = false">
+                  <v-icon>mdi-close</v-icon>
+
+                  Close</v-btn
                 >
                 <v-btn
                   color="green"
-                  outlined
+                  depressed
+                  dark
                   @click="save(minerInfo.ip)"
                   :loading="loading"
                   :disabled="loading"
-                  >Save</v-btn
+                  rounded
+                >
+                  <v-icon>mdi-content-save</v-icon>
+
+                  Save</v-btn
                 >
 
-                <v-btn
-                  color="pink accent-2"
-                  outlined
-                  @click="save(minerInfo.ip)"
-                  :loading="loading"
-                  :disabled="loading"
-                >
+                <v-btn color="green" dark depressed rounded :disabled="loading">
+                  <v-icon>mdi-restart</v-icon>
+
                   Restart</v-btn
                 >
 
+                <v-btn
+                  depressed
+                  dark
+                  rounded
+                  outlined
+                  color="grey"
+                  @click="advanced = !advanced"
+                >
+                  <v-icon>mdi-settings</v-icon>
+                </v-btn>
                 <v-spacer></v-spacer>
 
                 <v-btn
+                  dark
+                  rounded
                   color="red accent-4"
-                  depressed
-                  @click="save(minerInfo.ip)"
-                  :loading="loading"
+                  outlined
                   :disabled="loading"
                 >
+                  <v-icon>mdi-alert</v-icon>
                   Reboot</v-btn
                 >
 
-                <v-spacer></v-spacer>
+                <v-btn
+                  dark
+                  rounded
+                  color="red accent-4"
+                  outlined
+                  :disabled="loading"
+                >
+                  <v-icon>mdi-power</v-icon>
+                  Shutdown</v-btn
+                >
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -110,7 +167,6 @@
 
     <v-snackbar v-model="snack" :timeout="3000" :color="snackColor">
       {{ snackText }}
-      <v-btn text @click="snack = false">Close</v-btn>
     </v-snackbar>
   </v-card>
 </template>
@@ -127,16 +183,14 @@ export default {
   validations: {
     ip: { required, minLength: minLength(8) }
   },
-  beforeMount() {
+  beforeCreate() {
     // this.$vuetify.theme.dark = false; // eslint-disable-next-line no-unused-vars
     this.axios.get("/v1/api/miners").then(response => {
       this.miners = response.data;
       this.miners.forEach(element => {
         element.summary.lastacctime = this.timeago(element.summary.lastacctime);
         element.summary.uptime = `${parseInt(element.summary.uptime / 3600)} h`;
-        element.summary.freq = `${parseInt(
-          element.summary.freq / 1000000
-        )} MHz`;
+        element.summary.freq = `${parseInt(element.summary.freq / 1000000)}`;
       });
     });
   },
@@ -149,10 +203,10 @@ export default {
           JSON.parse(this.minerJSON)
         );
         this.snackColor = "success";
-        this.snackText = "Data saved";
+        this.snackText = "Data saved!";
       } catch (error) {
-        this.snackColor = "error";
         this.snackText = error;
+        this.snackColor = "error";
         this.snack = true;
       } finally {
         this.snack = true;
@@ -186,7 +240,14 @@ export default {
   },
   data: () => ({
     minerJSON: "",
-    minerInfo: "",
+    minerInfo: {
+      ip: "",
+      summary: {
+        url: "",
+        user: ""
+      }
+    },
+    advanced: false,
     dialog: false,
     snack: false,
     snackColor: "",
@@ -194,22 +255,22 @@ export default {
     max25chars: v => v.length <= 25 || "Input too long!",
     pagination: {},
     headers: [
-      { text: "url", value: "url" },
-      { text: "user", value: "summary.user" },
-      { text: "pass", value: "summary.pass", sortable: false },
-      { text: "accept", value: "summary.acc" },
-      { text: "acc/min", value: "summary.accmn" },
-      { text: "reject", value: "summary.rej" },
-      { text: "temp", value: "summary.temp" },
-      { text: "lastacc", value: "summary.lastacctime" },
-      { text: "uptime", value: "summary.uptime" },
-      { text: "hashrate", value: "summary.khs" },
-      { text: "algo", value: "summary.algo" },
-      { text: "netdiff", value: "summary.diff" },
-      { text: "pooldiff", value: "summary.stdiff" },
-      { text: "chip", value: "summary.ascs" },
-      { text: "valid", value: "summary.ascsvalid" },
-      { text: "freq", value: "summary.freq" }
+      { text: "URL", value: "url" },
+      { text: "User", value: "summary.user" },
+      { text: "Pass", value: "summary.pass", sortable: false },
+      { text: "Accept", value: "summary.acc" },
+      { text: "Reject", value: "summary.rej" },
+      { text: "Temp", value: "summary.temp" },
+      { text: "Acc/min", value: "summary.accmn" },
+      { text: "LastAcc", value: "summary.lastacctime" },
+      { text: "Uptime", value: "summary.uptime" },
+      { text: "Hashrate", value: "summary.khs" },
+      { text: "Algo", value: "summary.algo" },
+      { text: "NetDiff", value: "summary.diff" },
+      { text: "PoolDiff", value: "summary.stdiff" },
+      { text: "Chip", value: "summary.ascs" },
+      { text: "Valid", value: "summary.ascsvalid" },
+      { text: "Freq(MHz)", value: "summary.freq" }
     ],
     ip: "",
     rules: [
@@ -219,14 +280,7 @@ export default {
       }
     ],
     selected: [],
-    miners: [
-      {
-        summary: {
-          url: "dummy",
-          temp: 43
-        }
-      }
-    ],
+    miners: [],
     loading: false,
     loader: null
   }),
@@ -237,7 +291,6 @@ export default {
       this[l] = !this[l];
       setTimeout(() => {
         this[l] = false;
-        this.dialog = false;
       }, 3000);
 
       this.loader = null;
