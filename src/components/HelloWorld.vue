@@ -62,7 +62,7 @@
                   :disabled="loading"
                   dense
                   rounded
-                  v-model="minerInfo.summary.url"
+                  v-model="minerInfo.setting.pools[0].url"
                 ></v-text-field>
                 <v-text-field
                   label="User"
@@ -70,8 +70,8 @@
                   color="green accent-4"
                   :disabled="loading"
                   outlined
+                  v-model="minerInfo.setting.pools[0].user"
                   dense
-                  v-model="minerInfo.summary.user"
                 ></v-text-field>
                 <v-text-field
                   label="Pass"
@@ -80,7 +80,7 @@
                   outlined
                   dense
                   :disabled="loading"
-                  v-model="minerInfo.summary.pass"
+                  v-model="minerInfo.setting.pools[0].pass"
                   hide-details
                 ></v-text-field>
               </v-col>
@@ -191,6 +191,7 @@ export default {
   },
   beforeCreate() {
     // this.$vuetify.theme.dark = false; // eslint-disable-next-line no-unused-vars
+
     this.axios.get("/v1/api/miners").then(response => {
       this.miners = response.data;
       this.miners.forEach(element => {
@@ -205,6 +206,8 @@ export default {
     async save(ip) {
       this.loader = "loading";
       try {
+        this.minerJSON = JSON.stringify(this.minerInfo.setting);
+
         await this.axios.put(
           `/v1/api/miners/status/${ip}`,
           JSON.parse(this.minerJSON)
@@ -225,6 +228,13 @@ export default {
       ws.onmessage = event => {
         this.snackText = event.data;
         this.snackColor = "success";
+        this.snack = true;
+        ws.close();
+      };
+
+      ws.onerror = err => {
+        this.snackText = err;
+        this.snackColor = "error";
         this.snack = true;
         ws.close();
       };
@@ -250,7 +260,6 @@ export default {
       const result = timeAgo.format(new Date(time));
 
       if (result === "just now") {
-        // eslint-disable-next-line no-console
         return `${Math.floor((new Date() - new Date(time)) / 1000)}s ago`;
       } else {
         return result;
@@ -267,10 +276,14 @@ export default {
   data: () => ({
     minerJSON: "",
     minerInfo: {
-      ip: "",
-      summary: {
-        url: "",
-        user: ""
+      setting: {
+        pools: [
+          {
+            user: "",
+            url: "",
+            pass: ""
+          }
+        ]
       }
     },
     advanced: false,
@@ -317,7 +330,7 @@ export default {
       this[l] = !this[l];
       setTimeout(() => {
         this[l] = false;
-      }, 3000);
+      }, 2000);
 
       this.loader = null;
     }
