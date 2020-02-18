@@ -4,8 +4,6 @@
       :headers="headers"
       :items="miners"
       v-model="selected"
-      show-select
-      single-select
       item-key="ip"
     >
       <template v-slot:item.url="props">
@@ -44,13 +42,22 @@
 
           <v-dialog v-model="dialog" width="800" persistent>
             <v-card>
-              <v-card-title>
-                <span class="headline">{{ minerInfo.ip }}</span>
+              <v-card-title class="px-3">
+                <v-icon class="pr-3" color="green accent-4" x-large
+                  >mdi-raspberry-pi</v-icon
+                >
+                <span class="headline font-weight-light"
+                  >{{ minerInfo.ip }} / {{ minerInfo.mac }}</span
+                >
+                <v-spacer></v-spacer>
+                <v-btn icon @click="advanced = !advanced">
+                  <v-icon>mdi-settings</v-icon>
+                </v-btn>
               </v-card-title>
               <v-col cols="12">
                 <v-text-field
                   label="URL"
-                  color="green"
+                  color="green accent-4"
                   outlined
                   :disabled="loading"
                   dense
@@ -60,7 +67,7 @@
                 <v-text-field
                   label="User"
                   rounded
-                  color="green"
+                  color="green accent-4"
                   :disabled="loading"
                   outlined
                   dense
@@ -68,70 +75,69 @@
                 ></v-text-field>
                 <v-text-field
                   label="Pass"
-                  color="green"
+                  color="green accent-4"
                   rounded
                   outlined
                   dense
                   :disabled="loading"
                   v-model="minerInfo.summary.pass"
+                  hide-details
                 ></v-text-field>
               </v-col>
 
-              <v-expand-transition>
-                <v-col cols="12" v-show="advanced">
+              <v-col class="py-0">
+                <v-expand-transition>
                   <v-textarea
-                    dark
-                    background-color="red"
-                    solo
+                    v-show="advanced"
+                    hide-details
+                    flat
+                    height="300"
+                    background-color="red lighten-2"
                     name="input-7-4"
-                    label="Solo textarea"
+                    :disabled="loading"
+                    rounded
+                    solo
                     v-model="minerJSON"
                   ></v-textarea>
-                </v-col>
-              </v-expand-transition>
+                </v-expand-transition>
+              </v-col>
 
-              <v-card-actions class="px-4">
-                <v-btn color="grey" dark rounded depressed @click="dialog = false">
+              <v-card-actions class="px-3">
+                <v-btn text @click="dialog = false">
                   <v-icon>mdi-close</v-icon>
 
                   Close</v-btn
                 >
                 <v-btn
-                  color="green"
-                  depressed
-                  dark
+                  color="green accent-4"
+                  class="white--text"
                   @click="save(minerInfo.ip)"
                   :loading="loading"
                   :disabled="loading"
-                  rounded
+                  text
                 >
                   <v-icon>mdi-content-save</v-icon>
 
                   Save</v-btn
                 >
 
-                <v-btn color="green" dark depressed rounded :disabled="loading">
+                <v-btn
+                  class="white--text"
+                  color="green accent-4"
+                  text
+                  :disabled="loading"
+                  @click="apply(minerInfo.ip)"
+                >
                   <v-icon>mdi-restart</v-icon>
 
-                  Restart</v-btn
+                  apply</v-btn
                 >
 
-                <v-btn
-                  depressed
-                  dark
-                  rounded
-                  outlined
-                  color="grey"
-                  @click="advanced = !advanced"
-                >
-                  <v-icon>mdi-settings</v-icon>
-                </v-btn>
                 <v-spacer></v-spacer>
 
                 <v-btn
-                  dark
                   rounded
-                  color="red accent-4"
+                  color="red accent-3"
                   outlined
                   :disabled="loading"
                 >
@@ -140,11 +146,11 @@
                 >
 
                 <v-btn
-                  dark
                   rounded
-                  color="red accent-4"
+                  color="red accent-3"
                   outlined
                   :disabled="loading"
+                  @click="shutdown(minerInfo.ip)"
                 >
                   <v-icon>mdi-power</v-icon>
                   Shutdown</v-btn
@@ -191,6 +197,7 @@ export default {
         element.summary.lastacctime = this.timeago(element.summary.lastacctime);
         element.summary.uptime = `${parseInt(element.summary.uptime / 3600)} h`;
         element.summary.freq = `${parseInt(element.summary.freq / 1000000)}`;
+        element.summary.khs = `${parseInt(element.summary.khs / 1000)} Mhs`;
       });
     });
   },
@@ -211,6 +218,25 @@ export default {
       } finally {
         this.snack = true;
       }
+    },
+
+    shutdown(ip) {
+      const ws = new WebSocket(`ws://${ip}:4048/shutdown`, "text");
+      ws.onmessage = event => {
+        this.snackText = event.data;
+        this.snackColor = "success";
+        this.snack = true;
+        ws.close();
+      };
+    },
+    apply(ip) {
+      const ws = new WebSocket(`ws://${ip}:4048/restart`, "text");
+      ws.onmessage = event => {
+        this.snackText = event.data;
+        this.snackColor = "success";
+        this.snack = true;
+        ws.close();
+      };
     },
     // eslint-disable-next-line no-unused-vars
     setting(content) {
