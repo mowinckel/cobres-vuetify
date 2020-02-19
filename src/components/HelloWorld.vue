@@ -168,6 +168,7 @@
             inset
             color="pink accent-2"
           ></v-switch>
+          <v-btn prepend-icon="mdi-setting" color="pink accent-2"></v-btn>
         </v-toolbar>
       </template>
     </v-data-table>
@@ -277,7 +278,7 @@ export default {
   },
   methods: {
     hashrate(khs) {
-      if (1000 >= khs % 1000) {
+      if (1000 > khs / 1000) {
         return `${khs / 1000}M`;
       } else {
         return `${khs / 1000000}G`;
