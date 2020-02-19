@@ -1,6 +1,7 @@
 <template>
   <v-card tile flat>
     <v-data-table
+      show-select
       :headers="headers"
       :items="miners"
       v-model="selected"
@@ -174,6 +175,65 @@
     <v-snackbar v-model="snack" :timeout="3000" :color="snackColor">
       {{ snackText }}
     </v-snackbar>
+    <v-divider></v-divider>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-dialog v-model="addDialog" width="500">
+        <template v-slot:activator="{ on }">
+          <v-btn text v-on="on">add miner</v-btn>
+        </template>
+        <v-card>
+          <v-card-text>
+            <v-container class="pb-0 pt-5">
+              <v-text-field
+                color="green accent-4"
+                outlined
+                hide-details
+                v-model="ip"
+                label="ip addess"
+                required
+              ></v-text-field>
+            </v-container>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text width="25%" @click="addMiner(ip)">
+              add
+            </v-btn>
+            <v-spacer></v-spacer>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-dialog v-model="multiset" width="500">
+        <template v-slot:activator="{ on }">
+          <v-btn text v-on="on">multi set</v-btn>
+        </template>
+        <v-card>
+          <v-card-text>
+            <v-container class="pb-0 pt-5">
+              <v-text-field
+                color="green accent-4"
+                outlined
+                hide-details
+                v-model="ip"
+                label="ip addess"
+                required
+              ></v-text-field>
+            </v-container>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text width="25%" @click="addMiner(ip)">
+              add
+            </v-btn>
+            <v-spacer></v-spacer>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-card-actions>
+    <v-divider></v-divider>
   </v-card>
 </template>
 
@@ -190,19 +250,39 @@ export default {
     ip: { required, minLength: minLength(8) }
   },
   beforeCreate() {
-    // this.$vuetify.theme.dark = false; // eslint-disable-next-line no-unused-vars
-
-    this.axios.get("/v1/api/miners").then(response => {
-      this.miners = response.data;
-      this.miners.forEach(element => {
-        element.summary.lastacctime = this.timeago(element.summary.lastacctime);
-        element.summary.uptime = `${parseInt(element.summary.uptime / 3600)} h`;
-        element.summary.freq = `${parseInt(element.summary.freq / 1000000)}`;
-        element.summary.khs = `${parseInt(element.summary.khs / 1000)} Mhs`;
-      });
-    });
+    setInterval(() => {
+      this.axios
+        .get("/v1/api/miners")
+        .then(response => {
+          this.miners = response.data;
+          this.miners.forEach(element => {
+            element.summary.lastacctime = this.timeago(
+              element.summary.lastacctime
+            );
+            element.summary.uptime = `${parseInt(
+              element.summary.uptime / 3600
+            )} h`;
+            element.summary.freq = `${parseInt(
+              element.summary.freq / 1000000
+            )}`;
+            element.summary.khs = this.hashrate(parseInt(element.summary.khs));
+          });
+        })
+        .catch(err => {
+          this.snackText = err;
+          this.snackColor = "error";
+          this.snack = true;
+        });
+    }, 1500);
   },
   methods: {
+    hashrate(khs) {
+      if (1000 > khs % 1000) {
+        return `${khs / 1000} MHs`;
+      } else {
+        return `${khs / 1000000} GHs`;
+      }
+    },
     async save(ip) {
       this.loader = "loading";
       try {
@@ -221,6 +301,10 @@ export default {
       } finally {
         this.snack = true;
       }
+    },
+
+    async addMiner(ip) {
+      this.axios.post(`/v1/api/miner${ip}`);
     },
 
     shutdown(ip) {
@@ -261,6 +345,10 @@ export default {
 
       if (result === "just now") {
         return `${Math.floor((new Date() - new Date(time)) / 1000)}s ago`;
+      } else if (result.includes("minute")) {
+        return result.replace("minute", "m");
+      } else if (result.includes("minutes")) {
+        return result.replace("hour", "h");
       } else {
         return result;
       }
