@@ -273,11 +273,11 @@ export default {
           this.snackColor = "error";
           this.snack = true;
         });
-    }, 1500);
+    }, 1000);
   },
   methods: {
     hashrate(khs) {
-      if (1000 > khs % 1000) {
+      if (1000 >= khs % 1000) {
         return `${khs / 1000} MHs`;
       } else {
         return `${khs / 1000000} GHs`;
