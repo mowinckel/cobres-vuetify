@@ -23,7 +23,9 @@
       </template>
       <template v-slot:item.summary.temp="props">
         <v-chip small color="orange" class="pa-1" outlined>
-          <v-icon v-if="props.item.summary.temp > 70" color="orange"
+          <v-icon
+            v-if="props.item.summary.temp > cobre_setting.alert.temp"
+            color="orange"
             >mdi-fire</v-icon
           >
           {{ props.item.summary.temp }} C
@@ -182,6 +184,7 @@
                       max="30"
                       thumb-size="24"
                       step="1"
+                      v-model="cobre_setting.interval.axios"
                       tick-size="10"
                     ></v-slider>
                   </v-col>
@@ -192,6 +195,7 @@
                       persistent-hint
                       thumb-size="24"
                       thumb-label="always"
+                      v-model="cobre_setting.alert.temp"
                       min="20"
                       step="1"
                       tick-size="10"
@@ -263,13 +267,26 @@ export default {
     ip: { required, minLength: minLength(8) }
   },
   beforeMount() {
+    this.getSetting();
     this.getAllMiners();
 
     setInterval(() => {
       this.getAllMiners();
-    }, 5000);
+    }, this.cobre_setting.interval.axios * 1000);
   },
   methods: {
+    getSetting() {
+      this.axios
+        .get("/v1/api/setting")
+        .then(res => {
+          this.cobre_setting = res.data;
+        })
+        .catch(err => {
+          this.snackText = err;
+          this.snackColor = "error";
+          this.snack = true;
+        });
+    },
     getAllMiners() {
       this.axios
         .get("/v1/api/miners")
@@ -307,7 +324,7 @@ export default {
       try {
         await this.axios.put(
           `/v1/api/miners/status/${ip}`,
-          this.minerInfo.setting
+          JSON.parse(this.miner_info)
         );
         this.snackColor = "success";
         this.snackText = "Data saved!";
@@ -350,7 +367,6 @@ export default {
         ws.close();
       };
     },
-    // eslint-disable-next-line no-unused-vars
     setting(content) {
       this.minerInfo = content;
       this.dialog = true;
@@ -382,6 +398,14 @@ export default {
     }
   },
   data: () => ({
+    cobre_setting: {
+      interval: {
+        axios: 5
+      },
+      alert: {
+        temp: 70
+      }
+    },
     settingDialog: false,
     addDialog: false,
     minerInfo: {
@@ -446,11 +470,11 @@ export default {
   },
   computed: {
     miner_info: {
-      get() {
+      get: function() {
         return JSON.stringify(this.minerInfo.setting, null, 2);
       },
-      set(v) {
-        this.minerInfo.summary = v;
+      set: function(newValue) {
+        this.minerInfo.setting = JSON.parse(newValue);
       }
     }
   }
