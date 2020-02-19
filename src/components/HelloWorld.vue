@@ -1,12 +1,6 @@
 <template>
   <v-card tile flat>
-    <v-data-table
-      show-select
-      :headers="headers"
-      :items="miners"
-      v-model="selected"
-      item-key="ip"
-    >
+    <v-data-table :headers="headers" :items="miners" item-key="ip">
       <template v-slot:item.url="props">
         <v-chip @click="setting(props.item)" class="pa-1">{{
           props.item.summary.url
@@ -41,7 +35,7 @@
             >Super Monitor</v-toolbar-title
           >
 
-          <v-dialog v-model="dialog" width="800" persistent>
+          <v-dialog v-model="dialog" width="800">
             <v-card>
               <v-card-title class="px-3">
                 <v-icon class="pr-3" color="green accent-4" x-large
@@ -168,7 +162,7 @@
             inset
             color="pink accent-2"
           ></v-switch>
-          <v-btn icon text color="pink accent-2">
+          <v-btn icon>
             <v-icon>mdi-settings</v-icon>
           </v-btn>
         </v-toolbar>
@@ -183,7 +177,7 @@
       <v-spacer></v-spacer>
       <v-dialog v-model="addDialog" width="500">
         <template v-slot:activator="{ on }">
-          <v-btn text v-on="on">add miner</v-btn>
+          <v-btn class="text-capitalize" text v-on="on">Add Miner</v-btn>
         </template>
         <v-card>
           <v-card-text>
@@ -193,7 +187,7 @@
                 outlined
                 hide-details
                 v-model="ip"
-                label="ip addess"
+                label="IP Address"
                 required
               ></v-text-field>
             </v-container>
@@ -209,9 +203,9 @@
         </v-card>
       </v-dialog>
       <v-dialog v-model="multiset" width="500">
-        <template v-slot:activator="{ on }">
-          <v-btn text v-on="on">multi set</v-btn>
-        </template>
+        <!-- <template v-slot:activator="{ on }"> -->
+        <!-- <v-btn text v-on="on">multi set</v-btn> -->
+        <!-- </template> -->
         <v-card>
           <v-card-text>
             <v-container class="pb-0 pt-5">
@@ -354,7 +348,10 @@ export default {
       if (result === "just now") {
         return `${Math.floor((new Date() - new Date(time)) / 1000)}s ago`;
       } else if (result.includes("minute")) {
-        return result.replace("minute", "m");
+        if (result.startsWith("a")) {
+          return "1m ago";
+        }
+        return result.replace(" minute", "m");
       } else if (result.includes("minutes")) {
         return result.replace("hour", "h");
       } else {
@@ -370,6 +367,7 @@ export default {
     }
   },
   data: () => ({
+    interval: 10000,
     minerJSON: "",
     minerInfo: {
       setting: {
