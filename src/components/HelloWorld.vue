@@ -278,9 +278,9 @@ export default {
   methods: {
     hashrate(khs) {
       if (1000 >= khs % 1000) {
-        return `${khs / 1000} MHs`;
+        return `${khs / 1000}M`;
       } else {
-        return `${khs / 1000000} GHs`;
+        return `${khs / 1000000}G`;
       }
     },
     async save(ip) {
