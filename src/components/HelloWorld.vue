@@ -92,7 +92,7 @@
                     :disabled="loading"
                     rounded
                     solo
-                    v-model="minerJSON"
+                    v-model="miner_info"
                   ></v-textarea>
                 </v-expand-transition>
               </v-col>
@@ -162,9 +162,52 @@
             inset
             color="pink accent-2"
           ></v-switch>
-          <v-btn icon>
-            <v-icon>mdi-settings</v-icon>
-          </v-btn>
+
+          <v-dialog v-model="settingDialog" width="500">
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on="on">
+                <v-icon>mdi-settings</v-icon>
+              </v-btn>
+            </template>
+            <v-card>
+              <v-container>
+                <v-card-text>
+                  <v-col cols="12">
+                    <v-subheader class="pl-0"></v-subheader>
+                    <v-slider
+                      hint="Tick size"
+                      persistent-hint
+                      thumb-label="always"
+                      min="1"
+                      max="30"
+                      thumb-size="24"
+                      step="1"
+                      tick-size="10"
+                    ></v-slider>
+                  </v-col>
+                  <v-col cols="12">
+                    <v-subheader class="pl-0"></v-subheader>
+                    <v-slider
+                      hint="Temperature alert"
+                      persistent-hint
+                      thumb-size="24"
+                      thumb-label="always"
+                      min="20"
+                      step="1"
+                      tick-size="10"
+                    ></v-slider>
+                  </v-col>
+                </v-card-text>
+              </v-container>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text width="25%">
+                  apply
+                </v-btn>
+                <v-spacer></v-spacer>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-toolbar>
       </template>
     </v-data-table>
@@ -202,33 +245,6 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-dialog v-model="multiset" width="500">
-        <!-- <template v-slot:activator="{ on }"> -->
-        <!-- <v-btn text v-on="on">multi set</v-btn> -->
-        <!-- </template> -->
-        <v-card>
-          <v-card-text>
-            <v-container class="pb-0 pt-5">
-              <v-text-field
-                color="green accent-4"
-                outlined
-                hide-details
-                v-model="ip"
-                label="ip addess"
-                required
-              ></v-text-field>
-            </v-container>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text width="25%" @click="addMiner(ip)">
-              add
-            </v-btn>
-            <v-spacer></v-spacer>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
     </v-card-actions>
     <v-divider></v-divider>
   </v-card>
@@ -248,9 +264,10 @@ export default {
   },
   beforeMount() {
     this.getAllMiners();
+
     setInterval(() => {
       this.getAllMiners();
-    }, 1000);
+    }, 5000);
   },
   methods: {
     getAllMiners() {
@@ -288,11 +305,9 @@ export default {
     async save(ip) {
       this.loader = "loading";
       try {
-        this.minerJSON = JSON.stringify(this.minerInfo.setting);
-
         await this.axios.put(
           `/v1/api/miners/status/${ip}`,
-          JSON.parse(this.minerJSON)
+          this.minerInfo.setting
         );
         this.snackColor = "success";
         this.snackText = "Data saved!";
@@ -311,6 +326,7 @@ export default {
 
     shutdown(ip) {
       const ws = new WebSocket(`ws://${ip}:4048/shutdown`, "text");
+
       ws.onmessage = event => {
         this.snackText = event.data;
         this.snackColor = "success";
@@ -337,7 +353,6 @@ export default {
     // eslint-disable-next-line no-unused-vars
     setting(content) {
       this.minerInfo = content;
-      this.minerJSON = JSON.stringify(this.minerInfo.setting, null, 2);
       this.dialog = true;
     },
 
@@ -367,7 +382,8 @@ export default {
     }
   },
   data: () => ({
-    minerJSON: "",
+    settingDialog: false,
+    addDialog: false,
     minerInfo: {
       setting: {
         pools: [
@@ -426,6 +442,16 @@ export default {
       }, 2000);
 
       this.loader = null;
+    }
+  },
+  computed: {
+    miner_info: {
+      get() {
+        return JSON.stringify(this.minerInfo.setting, null, 2);
+      },
+      set(v) {
+        this.minerInfo.summary = v;
+      }
     }
   }
 };
