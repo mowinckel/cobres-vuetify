@@ -250,7 +250,7 @@ export default {
     this.getAllMiners();
     setInterval(() => {
       this.getAllMiners();
-    }, 10000);
+    }, 1000);
   },
   methods: {
     getAllMiners() {
@@ -367,7 +367,6 @@ export default {
     }
   },
   data: () => ({
-    interval: 10000,
     minerJSON: "",
     minerInfo: {
       setting: {
