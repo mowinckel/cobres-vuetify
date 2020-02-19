@@ -252,7 +252,7 @@ export default {
   validations: {
     ip: { required, minLength: minLength(8) }
   },
-  beforeCreate() {
+  beforeMount() {
     this.getAllMiners();
     setInterval(() => {
       this.getAllMiners();
