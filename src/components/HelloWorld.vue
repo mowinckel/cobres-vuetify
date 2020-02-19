@@ -101,7 +101,7 @@
                 <v-btn text @click="dialog = false">
                   <v-icon>mdi-close</v-icon>
 
-                  Close</v-btn
+                  Cancel</v-btn
                 >
                 <v-btn
                   color="green accent-4"
@@ -390,7 +390,7 @@ export default {
     headers: [
       { text: "URL", value: "url" },
       { text: "User", value: "summary.user" },
-      { text: "Pass", value: "summary.pass", sortable: false },
+      { text: "Pass", value: "summary.pass" },
       { text: "Accept", value: "summary.acc" },
       { text: "Reject", value: "summary.rej" },
       { text: "Temp", value: "summary.temp" },
