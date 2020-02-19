@@ -168,7 +168,9 @@
             inset
             color="pink accent-2"
           ></v-switch>
-          <v-btn prepend-icon="mdi-setting" color="pink accent-2"></v-btn>
+          <v-btn icon text color="pink accent-2">
+            <v-icon>mdi-settings</v-icon>
+          </v-btn>
         </v-toolbar>
       </template>
     </v-data-table>
@@ -251,7 +253,13 @@ export default {
     ip: { required, minLength: minLength(8) }
   },
   beforeCreate() {
+    this.getAllMiners();
     setInterval(() => {
+      this.getAllMiners();
+    }, 10000);
+  },
+  methods: {
+    getAllMiners() {
       this.axios
         .get("/v1/api/miners")
         .then(response => {
@@ -274,9 +282,8 @@ export default {
           this.snackColor = "error";
           this.snack = true;
         });
-    }, 1000);
-  },
-  methods: {
+    },
+
     hashrate(khs) {
       if (1000 > khs / 1000) {
         return `${khs / 1000}M`;
