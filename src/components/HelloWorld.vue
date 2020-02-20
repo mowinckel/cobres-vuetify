@@ -287,12 +287,18 @@ export default {
     this.getSetting();
     this.getAllMiners();
 
-    setInterval(() => {
+    this.inerval = setInterval(() => {
       this.getAllMiners();
     }, this.cobre_setting.interval.axios * 1000);
   },
   methods: {
     setSetting() {
+      clearInterval(this.inerval);
+      
+      this.inerval = setInterval(() => {
+        this.getAllMiners();
+      }, this.cobre_setting.interval.axios * 1000);
+
       this.axios
         .put("/v1/api/setting", this.cobre_setting)
         .then(res => {
