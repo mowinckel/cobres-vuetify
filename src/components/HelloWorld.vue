@@ -230,6 +230,15 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
+
+          <v-btn
+            icon
+            @click="addMiner()"
+            :loading="scan_loader"
+            :disabled="scan_loader"
+          >
+            <v-icon>mdi-magnify</v-icon>
+          </v-btn>
         </v-toolbar>
       </template>
     </v-data-table>
@@ -237,10 +246,10 @@
     <v-snackbar v-model="snack" :timeout="3000" :color="snackColor">
       {{ snackText }}
     </v-snackbar>
-    <v-divider></v-divider>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-dialog v-model="addDialog" width="500">
+    <!-- <v-divider></v-divider> -->
+    <!-- <v-card-actions> -->
+    <!-- <v-spacer></v-spacer> -->
+    <!-- <v-dialog v-model="addDialog" width="500">
         <template v-slot:activator="{ on }">
           <v-btn class="text-capitalize" text v-on="on">Add Miner</v-btn>
         </template>
@@ -266,9 +275,9 @@
             <v-spacer></v-spacer>
           </v-card-actions>
         </v-card>
-      </v-dialog>
-    </v-card-actions>
-    <v-divider></v-divider>
+      </v-dialog> -->
+    <!-- </v-card-actions> -->
+    <!-- <v-divider></v-divider> -->
   </v-card>
 </template>
 
@@ -359,25 +368,46 @@ export default {
       }
     },
     async save(ip) {
-      this.loader = "loading";
+      this.loading = true;
       try {
-        await this.axios.put(
+        const res = await this.axios.put(
           `/v1/api/miners/status/${ip}`,
           JSON.parse(this.miner_info)
         );
-        this.snackColor = "success";
-        this.snackText = "Data saved!";
+
+        if (res.status === 200) {
+          this.snackColor = "success";
+          this.snackText = "Data saved!";
+        }
       } catch (error) {
         this.snackText = error;
         this.snackColor = "error";
         this.snack = true;
       } finally {
+        this.loading = false;
         this.snack = true;
       }
     },
 
     async addMiner(ip) {
-      this.axios.post(`/v1/api/miner${ip}`);
+      this.scan_loader = true;
+
+      this.axios
+        .post(`/v1/api/miners/${ip}`)
+        .then(res => {
+          this.snackText = res;
+          this.snackColor = "success";
+          this.snack = true;
+        })
+        .catch(err => {
+          this.snackText = err;
+          this.snackColor = "error";
+          this.snack = true;
+        });
+
+      setTimeout(() => {
+        this.scan_loader = false;
+      }, 10000);
     },
 
     reboot(ip) {
@@ -454,6 +484,7 @@ export default {
     }
   },
   data: () => ({
+    scan_loader: false,
     cobre_setting: {
       interval: {
         axios: 5
@@ -509,21 +540,9 @@ export default {
     ],
     selected: [],
     miners: [],
-    loading: false,
-    loader: null
+    loading: false
   }),
 
-  watch: {
-    loader() {
-      const l = this.loader;
-      this[l] = !this[l];
-      setTimeout(() => {
-        this[l] = false;
-      }, 2000);
-
-      this.loader = null;
-    }
-  },
   computed: {
     miner_info: {
       get: function() {
