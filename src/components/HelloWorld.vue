@@ -2,9 +2,26 @@
   <v-card tile flat>
     <v-data-table :headers="headers" :items="miners" item-key="ip">
       <template v-slot:item.url="props">
-        <v-chip @click="setting(props.item)" class="pa-1">{{
-          props.item.summary.url
-        }}</v-chip>
+        <v-chip
+          dark
+          v-if="props.item.status === 'normal'"
+          color="green"
+          @click="setting(props.item)"
+        >
+          <v-icon left>
+            mdi-check
+          </v-icon>
+          {{ props.item.summary.url }}</v-chip
+        >
+        <v-tooltip top v-else>
+          <template v-slot:activator="{ on }">
+            <v-chip dark color="amber darken-3" v-on="on">
+              <v-icon left>mdi-alert-circle-outline</v-icon>
+              {{ props.item.summary.url }}
+            </v-chip>
+          </template>
+          <span>{{ props.item.setting }}</span>
+        </v-tooltip>
       </template>
       <template v-slot:item.summary.acc="props">
         <v-chip outlined small color="green" class="pa-1">
