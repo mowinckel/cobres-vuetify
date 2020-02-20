@@ -205,7 +205,7 @@
               </v-container>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn text width="25%">
+                <v-btn text width="25%" @click="setSetting()">
                   apply
                 </v-btn>
                 <v-spacer></v-spacer>
@@ -275,6 +275,21 @@ export default {
     }, this.cobre_setting.interval.axios * 1000);
   },
   methods: {
+    setSetting() {
+      this.axios
+        .put("/v1/api/setting", this.cobre_setting)
+        .then(res => {
+          this.snackText = res.data;
+          this.snackColor = "success";
+          this.snack = true;
+          this.settingDialog = false;
+        })
+        .catch(err => {
+          this.snackText = err;
+          this.snackColor = "error";
+          this.snack = true;
+        });
+    },
     getSetting() {
       this.axios
         .get("/v1/api/setting")
