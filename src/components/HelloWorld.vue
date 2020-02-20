@@ -154,6 +154,7 @@
                   color="red accent-3"
                   outlined
                   :disabled="loading"
+                  @click="reboot(minerInfo.ip)"
                 >
                   <v-icon>mdi-alert</v-icon>
                   Reboot</v-btn
@@ -294,7 +295,7 @@ export default {
   methods: {
     setSetting() {
       clearInterval(this.inerval);
-      
+
       this.inerval = setInterval(() => {
         this.getAllMiners();
       }, this.cobre_setting.interval.axios * 1000);
@@ -377,6 +378,23 @@ export default {
 
     async addMiner(ip) {
       this.axios.post(`/v1/api/miner${ip}`);
+    },
+
+    reboot(ip) {
+      const ws = new WebSocket(`ws://${ip}:4048/reboot`, "text");
+      ws.onmessage = event => {
+        this.snackText = event.data;
+        this.snackColor = "success";
+        this.snack = true;
+        ws.close();
+      };
+
+      ws.onerror = err => {
+        this.snackText = err;
+        this.snackColor = "error";
+        this.snack = true;
+        ws.close();
+      };
     },
 
     shutdown(ip) {
