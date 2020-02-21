@@ -389,11 +389,11 @@ export default {
       }
     },
 
-    async addMiner(ip) {
+    async addMiner() {
       this.scan_loader = true;
 
       this.axios
-        .post(`/v1/api/miners/${ip}`)
+        .post(`/v1/api/miners`)
         .then(res => {
           this.snackText = res;
           this.snackColor = "success";
@@ -484,7 +484,6 @@ export default {
     }
   },
   data: () => ({
-    scan_loader: false,
     cobre_setting: {
       interval: {
         axios: 5
@@ -495,6 +494,7 @@ export default {
     },
     settingDialog: false,
     addDialog: false,
+    scan_loader: false,
     minerInfo: {
       setting: {
         pools: [
@@ -511,7 +511,6 @@ export default {
     snack: false,
     snackColor: "",
     snackText: "",
-    max25chars: v => v.length <= 25 || "Input too long!",
     pagination: {},
     headers: [
       { text: "URL", value: "url" },
@@ -532,13 +531,6 @@ export default {
       { text: "Freq(MHz)", value: "summary.freq" }
     ],
     ip: "",
-    rules: [
-      value => {
-        const pattern = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        return pattern.test(value) || "올바른 IP 입력";
-      }
-    ],
-    selected: [],
     miners: [],
     loading: false
   }),
