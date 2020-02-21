@@ -51,7 +51,7 @@
       <template v-slot:top>
         <v-toolbar flat>
           <v-toolbar-title class="display-1 font-weight-thin"
-            >Super Monitor</v-toolbar-title
+            >Super Monitoring Now :: {{ miners.length }}</v-toolbar-title
           >
 
           <v-dialog v-model="dialog" width="800">
