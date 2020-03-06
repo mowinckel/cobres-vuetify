@@ -57,12 +57,14 @@
           <v-dialog v-model="dialog" width="800">
             <v-card>
               <v-card-title class="px-3">
-                <v-icon class="pr-3" color="green accent-4" x-large
+                <v-icon
+                  @click="this.window.open(minerInfo.ip)"
+                  class="pr-3"
+                  color="green accent-4"
+                  x-large
                   >mdi-raspberry-pi</v-icon
                 >
-                <span
-                  @click="this.window.open(minerInfo.ip)"
-                  class="headline font-weight-light"
+                <span class="headline font-weight-light"
                   >{{ minerInfo.ip }} / {{ minerInfo.mac }}</span
                 >
                 <v-spacer></v-spacer>
