@@ -58,7 +58,7 @@
             <v-card>
               <v-card-title class="px-3">
                 <v-icon
-                  @click="goto(minerInfo.ip)"
+                  @click="goto(`http://${minerInfo.ip}`)"
                   class="pr-3"
                   color="green accent-4"
                   x-large
