@@ -58,7 +58,7 @@
             <v-card>
               <v-card-title class="px-3">
                 <v-icon
-                  @click="this.window.open(minerInfo.ip)"
+                  @click="window.open(minerInfo.ip)"
                   class="pr-3"
                   color="green accent-4"
                   x-large
