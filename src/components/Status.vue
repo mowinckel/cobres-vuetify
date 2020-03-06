@@ -58,7 +58,7 @@
             <v-card>
               <v-card-title class="px-3">
                 <v-icon
-                  @click="window.open(minerInfo.ip)"
+                  @click="goto(minerInfo.ip)"
                   class="pr-3"
                   color="green accent-4"
                   x-large
@@ -460,6 +460,10 @@ export default {
     setting(content) {
       this.minerInfo = content;
       this.dialog = true;
+    },
+
+    goto(url) {
+      window.open(url);
     },
 
     timeago(time) {
