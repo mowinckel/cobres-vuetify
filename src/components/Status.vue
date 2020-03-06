@@ -7,7 +7,6 @@
           v-if="props.item.status === 'normal'"
           color="green"
           @click="setting(props.item)"
-          @dblclick="windows.open(props.item.ip)"
         >
           <v-icon left>
             mdi-check
@@ -61,7 +60,9 @@
                 <v-icon class="pr-3" color="green accent-4" x-large
                   >mdi-raspberry-pi</v-icon
                 >
-                <span class="headline font-weight-light"
+                <span
+                  @click="windows.open(minerInfo.ip)"
+                  class="headline font-weight-light"
                   >{{ minerInfo.ip }} / {{ minerInfo.mac }}</span
                 >
                 <v-spacer></v-spacer>
