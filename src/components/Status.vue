@@ -7,6 +7,7 @@
           v-if="props.item.status === 'normal'"
           color="green"
           @click="setting(props.item)"
+          @dblclick="windows.open(props.item.ip)"
         >
           <v-icon left>
             mdi-check
