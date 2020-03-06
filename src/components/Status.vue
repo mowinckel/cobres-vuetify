@@ -61,7 +61,7 @@
                   >mdi-raspberry-pi</v-icon
                 >
                 <span
-                  @click.native="windows.open(minerInfo.ip)"
+                  @click.native="window.open(minerInfo.ip)"
                   class="headline font-weight-light"
                   >{{ minerInfo.ip }} / {{ minerInfo.mac }}</span
                 >
