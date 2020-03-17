@@ -13,9 +13,16 @@
           </v-icon>
           {{ props.item.summary.url }}</v-chip
         >
+
         <v-tooltip top v-else>
           <template v-slot:activator="{ on }">
-            <v-chip dark color="amber darken-3" v-on="on">
+            <v-chip
+              dark
+              close
+              color="amber darken-3"
+              v-on="on"
+              @click:close="close(props.item.ip)"
+            >
               <v-icon left>mdi-alert-circle-outline</v-icon>
               {{ props.item.summary.url }}
             </v-chip>
@@ -250,38 +257,6 @@
     <v-snackbar v-model="snack" :timeout="3000" :color="snackColor">
       {{ snackText }}
     </v-snackbar>
-    <!-- <v-divider></v-divider> -->
-    <!-- <v-card-actions> -->
-    <!-- <v-spacer></v-spacer> -->
-    <!-- <v-dialog v-model="addDialog" width="500">
-        <template v-slot:activator="{ on }">
-          <v-btn class="text-capitalize" text v-on="on">Add Miner</v-btn>
-        </template>
-        <v-card>
-          <v-card-text>
-            <v-container class="pb-0 pt-5">
-              <v-text-field
-                color="green accent-4"
-                outlined
-                hide-details
-                v-model="ip"
-                label="IP Address"
-                required
-              ></v-text-field>
-            </v-container>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text width="25%" @click="addMiner(ip)">
-              add
-            </v-btn>
-            <v-spacer></v-spacer>
-          </v-card-actions>
-        </v-card>
-      </v-dialog> -->
-    <!-- </v-card-actions> -->
-    <!-- <v-divider></v-divider> -->
   </v-card>
 </template>
 
@@ -306,6 +281,20 @@ export default {
     }, this.cobre_setting.interval.axios * 1000);
   },
   methods: {
+    close(ip) {
+      this.axios
+        .delete(`/v1/api/miners/${ip}`)
+        .then(() => {
+          this.snackText = `${ip} deleted!!`;
+          this.snackColor = "success";
+          this.snack = true;
+        })
+        .catch(err => {
+          this.snackText = err;
+          this.snackColor = "error";
+          this.snack = true;
+        });
+    },
     setSetting() {
       clearInterval(this.inerval);
 
@@ -397,9 +386,9 @@ export default {
       this.scan_loader = true;
 
       this.axios
-        .post(`/v1/api/miners`)
+        .post(`/v1/api/miners/255.255.255.255`)
         .then(res => {
-          this.snackText = res;
+          this.snackText = res.data;
           this.snackColor = "success";
           this.snack = true;
         })
